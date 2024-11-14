@@ -1,0 +1,25 @@
+<!-- welcome_app/templates/welcome_app/welcome.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to the Online Library</title>
+</head>
+<body>
+    <h1>Welcome to the World of Learning</h1>
+    <h2>Library Books</h2>
+    
+    {% if books %}
+        <ul>
+            {% for book in books %}
+                <li>
+                    <strong>{{ book.title }}</strong> by {{ book.author }}<br>
+                    <em>{{ book.description }}</em>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No books available in the library.</p>
+    {% endif %}
+</body>
+</html>

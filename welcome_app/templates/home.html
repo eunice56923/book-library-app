@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse our collection of books across various categories">
+    <title>Book Library - Explore Our Collection</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome to the Book Library</h1>
+            
+            <!-- Optional: Add a search or filter section -->
+            <div class="search-filter">
+                <input type="search" 
+                       placeholder="Search books..." 
+                       aria-label="Search books"
+                       class="search-input">
+            </div>
+        </header>
+
+        <main>
+            {% if books_by_category %}
+                {% for category, books in books_by_category.items %}
+                    <section class="category-section" id="category-{{ category.id }}">
+                        <h2>{{ category.name }}</h2>
+                        
+                        {% if books %}
+                            <div class="book-grid">
+                                {% for book in books %}
+                                    <article class="book-card">
+                                        <div class="book-image">
+                                            {% if book.cover_image %}
+                                                <img src="{{ book.cover_image.url }}" 
+                                                     alt="{{ book.title }} cover" 
+                                                     class="book-cover"
+                                                     loading="lazy">
+                                            {% else %}
+                                                <img src="{% static 'img/placeholder.jpg' %}" 
+                                                     alt="Book cover placeholder" 
+                                                     class="book-cover"
+                                                     loading="lazy">
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="book-info">
+                                            <h3>
+                                                <a href="{% url 'book_detail' pk=book.pk %}" 
+                                                   title="View details of {{ book.title }}">
+                                                    {{ book.title }}
+                                                </a>
+                                            </h3>
+                                            
+                                            {% if book.author %}
+                                                <p class="book-author">by {{ book.author }}</p>
+                                            {% endif %}
+                                            
+                                            {% if book.description %}
+                                                <p class="book-description">
+                                                    {{ book.description|truncatewords:30 }}
+                                                </p>
+                                            {% endif %}
+                                            
+                                            <div class="book-meta">
+                                                {% if book.rating %}
+                                                    <span class="book-rating">
+                                                        Rating: {{ book.rating }}/5
+                                                    </span>
+                                                {% endif %}
+                                                
+                                                {% if book.pages %}
+                                                    <span class="book-pages">
+                                                        {{ book.pages }} pages
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="book-actions">
+                                                <a href="{% url 'book_detail' pk=book.pk %}" 
+                                                   class="btn btn-primary">
+                                                    Read More
+                                                </a>
+                                                {% if user.is_authenticated %}
+                                                    <button class="btn btn-secondary bookmark-btn" 
+                                                            data-book-id="{{ book.pk }}"
+                                                            aria-label="Bookmark {{ book.title }}">
+                                                        Bookmark
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="no-books-message">
+                                No books available in this category yet.
+                            </p>
+                        {% endif %}
+                    </section>
+                {% endfor %}
+            {% else %}
+                <p class="no-content-message">
+                    Our library is currently being updated. Please check back soon!
+                </p>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- Optional: Add a back-to-top button -->
+    <button id="back-to-top" 
+            class="back-to-top-btn" 
+            aria-label="Back to top">
+        ↑
+    </button>
+
+    <!-- JavaScript for enhanced functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Back to top button functionality
+            const backToTopButton = document.getElementById('back-to-top');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopButton.classList.add('visible');
+                } else {
+                    backToTopButton.classList.remove('visible');
+                }
+            });
+            
+            backToTopButton.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+
+            // Search functionality
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const bookCards = document.querySelectorAll('.book-card');
+                    
+                    bookCards.forEach(card => {
+                        const title = card.querySelector('h3').textContent.toLowerCase();
+                        const description = card.querySelector('.book-description')?.textContent.toLowerCase() || '';
+                        
+                        if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                            card.style.display = '';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Bookmark functionality (if user is authenticated)
+            const bookmarkButtons = document.querySelectorAll('.bookmark-btn');
+            bookmarkButtons.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const bookId = e.target.dataset.bookId;
+                    try {
+                        const response = await fetch('/api/bookmark/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ book_id: bookId })
+                        });
+                        
+                        if (response.ok) {
+                            btn.classList.toggle('bookmarked');
+                            btn.textContent = btn.classList.contains('bookmarked') ? 'Bookmarked' : 'Bookmark';
+                        }
+                    } catch (error) {
+                        console.error('Error bookmarking book:', error);
+                    }
+                });
+            });
+
+            // Helper function to get CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+</body>
+</html>
