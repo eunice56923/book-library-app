@@ -1,0 +1,39 @@
+{% extends 'base_generic.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <!-- Book Title -->
+        <h1>{{ book.title }}</h1>
+        
+        <!-- Book Cover Image -->
+        <div class="book-image">
+            {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-cover">
+            {% else %}
+                <img src="{% static 'img/placeholder.jpg' %}" alt="Placeholder image" class="book-cover">
+            {% endif %}
+        </div>
+
+        <!-- Book Details -->
+        <div class="book-details">
+            <p><strong>Author:</strong> {{ book.author }}</p>
+            <p><strong>Category:</strong> {{ book.category.name }}</p>
+            <p><strong>Publish Date:</strong> {{ book.publish_date }}</p>
+            <p>{{ book.description }}</p>
+        </div>
+
+        <!-- Button Group: Read and Download -->
+        <div class="button-group">
+            <!-- Read Button (navigates to a page to read the book online) -->
+            <a href="{% url 'book_read' pk=book.pk %}" class="btn btn-primary">Read</a>
+
+            <!-- Download Button (direct download of the book's PDF) -->
+            {% if book.pdf_file %}
+                <a href="{{ book.pdf_file.url }}" class="btn btn-secondary" download>Download</a>
+            {% else %}
+                <p class="no-pdf-message">No downloadable PDF available.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

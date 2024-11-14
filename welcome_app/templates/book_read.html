@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Reader</title>
+</head>
+<body>
+  <!-- Button to open the book -->
+  <button onclick="openBook()">Read Book</button>
+
+  <script>
+    function openBook() {
+      // Replace the URL with the dynamically generated URL from Django view
+      const bookUrl = "{% url 'book_read' pk=book.pk %}";
+      window.open(bookUrl, '_blank'); // Opens the link in a new tab
+    }
+  </script>
+</body>
+</html>
